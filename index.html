@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinanzTrack - Control Financiero Personal</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-800 transition-colors duration-300">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-blue-600 dark:text-blue-400">FinanzTrack</h1>
+                <p class="text-gray-600 dark:text-gray-300">Control total de tus finanzas</p>
+            </div>
+            <button id="themeToggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
+                <i class="fas fa-moon dark:hidden"></i>
+                <i class="fas fa-sun hidden dark:inline"></i>
+            </button>
+        </header>
+
+        <!-- Resumen Ejecutivo -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md transition-transform hover:scale-105">
+                <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">Balance Actual</h3>
+                <p id="currentBalance" class="text-3xl font-bold text-blue-600 dark:text-blue-400">$0.00</p>
+            </div>
+            <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md transition-transform hover:scale-105">
+                <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">Ingresos del Mes</h3>
+                <p id="monthIncome" class="text-3xl font-bold text-green-600 dark:text-green-400">$0.00</p>
+            </div>
+            <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md transition-transform hover:scale-105">
+                <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">Gastos del Mes</h3>
+                <p id="monthExpense" class="text-3xl font-bold text-red-600 dark:text-red-400">$0.00</p>
+            </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md">
+                <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">Balance Diario (Últimos 7 días)</h3>
+                <canvas id="dailyBalanceChart"></canvas>
+            </div>
+            <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md">
+                <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">Gastos por Categoría</h3>
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Formulario de Transacción -->
+        <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-4">Nueva Transacción</h2>
+            <form id="transactionForm" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label for="transactionType" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo</label>
+                    <select id="transactionType" class="w-full p-2 border rounded-md dark:bg-gray-600 dark:border-gray-500">
+                        <option value="income">Ingreso</option>
+                        <option value="expense">Gasto</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="transactionAmount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Monto</label>
+                    <input type="number" step="0.01" id="transactionAmount" class="w-full p-2 border rounded-md dark:bg-gray-600 dark:border-gray-500" required>
+                </div>
+                <div>
+                    <label for="transactionCategory" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Categoría</label>
+                    <select id="transactionCategory" class="w-full p-2 border rounded-md dark:bg-gray-600 dark:border-gray-500">
+                        <!-- Categorías se llenarán dinámicamente -->
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors">
+                        Agregar
+                    </button>
+                </div>
+                <div class="md:col-span-4">
+                    <label for="transactionNotes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notas (Opcional)</label>
+                    <input type="text" id="transactionNotes" class="w-full p-2 border rounded-md dark:bg-gray-600 dark:border-gray-500">
+                </div>
+            </form>
+        </div>
+
+        <!-- Lista de Transacciones -->
+        <div class="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-200">Historial de Transacciones</h2>
+                <div class="flex space-x-2">
+                    <select id="filterCategory" class="p-2 border rounded-md dark:bg-gray-600 dark:border-gray-500">
+                        <option value="all">Todas las categorías</option>
+                    </select>
+                    <input type="date" id="filterDate" class="p-2 border rounded-md dark:bg-gray-600 dark:border-gray-500">
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
+                    <thead class="bg-gray-50 dark:bg-gray-600">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Fecha</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Tipo</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Categoría</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Monto</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Notas</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionsList" class="bg-white dark:bg-gray-700 divide-y divide-gray-200 dark:divide-gray-600">
+                        <!-- Transacciones se llenarán dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-4 flex justify-between items-center">
+                <div>
+                    <button id="exportBtn" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md transition-colors mr-2">
+                        Exportar Datos
+                    </button>
+                    <button id="importBtn" class="bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-md transition-colors">
+                        Importar Datos
+                    </button>
+                </div>
+                <input type="file" id="importFile" class="hidden" accept=".json,.csv">
+            </div>
+        </div>
+    </div>
+
+    <!-- Notificación -->
+    <div id="notification" class="fixed bottom-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg hidden transform translate-y-10 opacity-0 transition-all duration-300">
+        <div class="flex items-center">
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            <span id="notificationText"></span>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
